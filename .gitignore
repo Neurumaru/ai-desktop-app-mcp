@@ -3,6 +3,7 @@ node_modules/
 
 # Bun
 .bun/
+bun.lock
 
 # Logs
 logs
