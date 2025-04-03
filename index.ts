@@ -80,48 +80,112 @@ async function checkChatGPTAccess(): Promise<boolean> {
 // Function to send a prompt to ChatGPT
 async function askChatGPT(prompt: string, conversationId?: string): Promise<string> {
   await checkChatGPTAccess();
-  
   try {
-    // This is a simplistic approach - actual implementation may need to be more sophisticated
-    const result = await runAppleScript(`
+    const saveClipboardScript = `
+      set originalClipboard to the clipboard
+      return originalClipboard
+    `;
+    const originalClipboard = await runAppleScript(saveClipboardScript);
+    const escapedOriginalClipboard = originalClipboard.replace(/"/g, '\\"');
+    
+    const inputScript = `
       tell application "ChatGPT"
         activate
         delay 1
-        
         tell application "System Events"
+          -- Select the ChatGPT window
           tell process "ChatGPT"
             ${conversationId ? `
-            -- Try to find and click the specified conversation
-            try
-              click button "${conversationId}" of group 1 of group 1 of window 1
-              delay 1
-            end try
+              try
+                click button "${conversationId}" of group 1 of group 1 of window 1
+                delay 1
+              end try
             ` : ''}
+            delay 0.2
             
-            -- Type in the prompt
-            keystroke "${prompt.replace(/"/g, '\\"')}"
-            delay 0.5
-            keystroke return
-            delay 5  -- Wait for response, adjust as needed
+            -- Select all text in the input field and delete it
+            key code 0 using {command down}
+            delay 0.2
+            key code 51
+            delay 0.2
             
-            -- Try to get the response (this is approximate and may need adjustments)
-            set responseText to ""
-            try
-              set responseText to value of text area 2 of group 1 of group 1 of window 1
-            on error
-              set responseText to "Could not retrieve the response from ChatGPT."
-            end try
-            
-            return responseText
+            -- Copy the prompt to the clipboard
+            set the clipboard to "${prompt.replace(/"/g, '\\"')}"
+            delay 0.2
+
+            -- Paste clipboard content and press Enter to send the message
+            key code 9 using {command down}
+            delay 0.2
+            key code 36
           end tell
         end tell
       end tell
-    `);
+    `;
     
-    return result;
+    const extractTextScript = `
+      tell application "ChatGPT"
+        tell application "System Events"
+          tell process "ChatGPT"
+            -- Extract text from the ChatGPT window
+            set frontWin to front window
+            set allUIElements to entire contents of frontWin
+            set conversationText to {}
+            repeat with e in allUIElements
+              try
+                if (role of e) is "AXStaticText" then
+                  set end of conversationText to (description of e)
+                end if
+              end try
+            end repeat
+            
+            -- If no readable text is found, return an error message
+            if (count of conversationText) = 0 then
+              return "No readable text found in the ChatGPT window."
+            else
+              set AppleScript's text item delimiters to linefeed
+              return conversationText as text
+            end if
+          end tell
+        end tell
+      end tell
+    `;
+    
+    await runAppleScript(inputScript);
+    
+    let lastResponse = "";
+    let currentResponse = "";
+    let unchanged = 0;
+    const maxTime = 120; 
+    const interval = 5; 
+    const maxIterations = Math.floor(maxTime / interval);
+    
+    for (let i = 0; i < maxIterations; i++) {
+      currentResponse = await runAppleScript(extractTextScript);
+      
+      if (currentResponse === lastResponse) {
+        unchanged++;
+        if (unchanged >= 2 && i >= 1) {
+          break;
+        }
+      } else {
+        unchanged = 0;
+        lastResponse = currentResponse;
+      }
+      
+      if (i < maxIterations - 1) {
+        await new Promise(resolve => setTimeout(resolve, interval * 1000));
+      }
+    }
+    
+    await runAppleScript(`set the clipboard to "${escapedOriginalClipboard}"`);
+    
+    return currentResponse;
   } catch (error) {
-    console.error("Error interacting with ChatGPT:", error);
-    throw new Error(`Failed to get response from ChatGPT: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to get response from ChatGPT: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 }
 
