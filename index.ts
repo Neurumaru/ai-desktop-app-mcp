@@ -7,7 +7,54 @@ import {
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { runAppleScript } from 'run-applescript';
-import { run } from '@jxa/run';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { existsSync } from 'fs';
+import * as os from 'os';
+
+// 락 파일 경로 설정
+const LOCK_FILE_PATH = path.join(os.tmpdir(), 'chatgpt-mcp-lock');
+const LOCK_TIMEOUT_MS = 120 * 1000; // 120초
+
+// 락 획득 함수
+async function acquireLock(): Promise<boolean> {
+  try {
+    // 락 파일이 존재하는지 확인
+    if (existsSync(LOCK_FILE_PATH)) {
+      // 락 파일이 존재하면 생성 시간 확인
+      const stats = await fs.stat(LOCK_FILE_PATH);
+      const lockAge = Date.now() - stats.mtimeMs;
+      
+      // 락이 타임아웃 시간보다 오래됐으면 강제로 해제
+      if (lockAge > LOCK_TIMEOUT_MS) {
+        console.log(`락 파일이 ${lockAge}ms 동안 유지되어 강제로 해제합니다.`);
+        await releaseLock();
+      } else {
+        // 아직 유효한 락이 있으므로 획득 실패
+        return false;
+      }
+    }
+    
+    // 락 파일 생성
+    await fs.writeFile(LOCK_FILE_PATH, String(process.pid), 'utf-8');
+    return true;
+  } catch (error) {
+    console.error('락 획득 실패:', error);
+    return false;
+  }
+}
+
+// 락 해제 함수
+async function releaseLock(): Promise<void> {
+  try {
+    // 락 파일이 존재하는지 확인
+    if (existsSync(LOCK_FILE_PATH)) {
+      await fs.unlink(LOCK_FILE_PATH);
+    }
+  } catch (error) {
+    console.error('락 해제 실패:', error);
+  }
+}
 
 // Define the ChatGPT tool
 const CHATGPT_TOOL: Tool = {
@@ -79,8 +126,14 @@ async function checkChatGPTAccess(): Promise<boolean> {
 
 // Function to send a prompt to ChatGPT
 async function askChatGPT(prompt: string, conversationId?: string): Promise<string> {
-  await checkChatGPTAccess();
+  // 락 획득 시도
+  if (!(await acquireLock())) {
+    throw new Error("다른 프로세스가 ChatGPT에 접근 중입니다. 잠시 후 다시 시도해주세요.");
+  }
+  
   try {
+    await checkChatGPTAccess();
+    
     const saveClipboardScript = `
       set originalClipboard to the clipboard
       return originalClipboard
@@ -186,6 +239,9 @@ async function askChatGPT(prompt: string, conversationId?: string): Promise<stri
         error instanceof Error ? error.message : String(error)
       }`
     );
+  } finally {
+    // 작업 완료 후 락 해제
+    await releaseLock();
   }
 }
 
