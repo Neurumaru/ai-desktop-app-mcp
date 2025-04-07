@@ -18,8 +18,8 @@ const CHATGPT_TOOL: Tool = {
     properties: {
       operation: {
         type: "string",
-        description: "Operation to perform: 'ask' or 'get_conversations'",
-        enum: ["ask", "get_conversations"]
+        description: "Operation to perform: 'ask'",
+        enum: ["ask"]
       },
       prompt: {
         type: "string",
@@ -189,50 +189,8 @@ async function askChatGPT(prompt: string, conversationId?: string): Promise<stri
   }
 }
 
-// Function to get available conversations
-async function getConversations(): Promise<string[]> {
-  await checkChatGPTAccess();
-  
-  try {
-    const result = await runAppleScript(`
-      tell application "ChatGPT"
-        activate
-        delay 1
-        
-        tell application "System Events"
-          tell process "ChatGPT"
-            -- Try to get conversation titles
-            set conversationsList to {}
-            
-            try
-              set chatButtons to buttons of group 1 of group 1 of window 1
-              repeat with chatButton in chatButtons
-                set buttonName to name of chatButton
-                if buttonName is not "New chat" then
-                  set end of conversationsList to buttonName
-                end if
-              end repeat
-            on error
-              set conversationsList to {"Unable to retrieve conversations"}
-            end try
-            
-            return conversationsList
-          end tell
-        end tell
-      end tell
-    `);
-    
-    // Parse the AppleScript result into an array
-    const conversations = result.split(", ");
-    return conversations;
-  } catch (error) {
-    console.error("Error getting ChatGPT conversations:", error);
-    return ["Error retrieving conversations"];
-  }
-}
-
 function isChatGPTArgs(args: unknown): args is {
-  operation: "ask" | "get_conversations";
+  operation: "ask";
   prompt?: string;
   conversation_id?: string;
 } {
@@ -240,7 +198,7 @@ function isChatGPTArgs(args: unknown): args is {
   
   const { operation, prompt, conversation_id } = args as any;
   
-  if (!operation || !["ask", "get_conversations"].includes(operation)) {
+  if (!operation || !["ask"].includes(operation)) {
     return false;
   }
   
@@ -283,20 +241,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             content: [{ 
               type: "text", 
               text: response || "No response received from ChatGPT."
-            }],
-            isError: false
-          };
-        }
-
-        case "get_conversations": {
-          const conversations = await getConversations();
-          
-          return {
-            content: [{ 
-              type: "text", 
-              text: conversations.length > 0 ? 
-                `Found ${conversations.length} conversation(s):\n\n${conversations.join("\n")}` :
-                "No conversations found in ChatGPT."
             }],
             isError: false
           };
