@@ -156,7 +156,7 @@ async function askChatGPT(prompt: string, conversationId?: string): Promise<stri
     let currentResponse = "";
     let unchanged = 0;
     const maxTime = 120; 
-    const interval = 5; 
+    const interval = 15; 
     const maxIterations = Math.floor(maxTime / interval);
     
     for (let i = 0; i < maxIterations; i++) {
