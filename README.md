@@ -1,5 +1,7 @@
 # Claude ChatGPT MCP Tool
 
+> ⚠️ **Warning**: This tool currently only works with the Korean version of ChatGPT desktop app. The button names and UI elements are hardcoded in Korean.
+
 This is a Model Context Protocol (MCP) tool that allows Claude to interact with the ChatGPT desktop app on macOS.
 
 ## Features
