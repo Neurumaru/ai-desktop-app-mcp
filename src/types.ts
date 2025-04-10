@@ -1,7 +1,7 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 export interface ChatGPTArgs {
-  operation: "ask";
+  operation: "ask" | "get_previous_response";
   prompt?: string;
   conversation_id?: string;
 }
@@ -14,16 +14,12 @@ export const CHATGPT_TOOL: Tool = {
     properties: {
       operation: {
         type: "string",
-        description: "Operation to perform: 'ask'",
-        enum: ["ask"]
+        description: "Operation to perform: 'ask', `get_previous_response`",
+        enum: ["ask", "get_previous_response"]
       },
       prompt: {
         type: "string",
         description: "The prompt to send to ChatGPT (required for ask operation)"
-      },
-      conversation_id: {
-        type: "string",
-        description: "Optional conversation ID to continue a specific conversation"
       }
     },
     required: ["operation"]
@@ -35,7 +31,7 @@ export function isChatGPTArgs(args: unknown): args is ChatGPTArgs {
   
   const { operation, prompt, conversation_id } = args as any;
   
-  if (!operation || !["ask"].includes(operation)) {
+  if (!operation || !["ask", "get_previous_response"].includes(operation)) {
     return false;
   }
   

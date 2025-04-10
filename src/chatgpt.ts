@@ -64,4 +64,31 @@ export async function askChatGPT(prompt: string, conversationId?: string): Promi
   } finally {
     await releaseLock();
   }
+}
+
+export async function getChat(): Promise<string> {
+  const startTime = Date.now();
+  let response = "";
+  
+  while (Date.now() - startTime < WAIT_TIMEOUT) {
+    const status = await getChatGPTStatus();
+    
+    if (status === 'error') {
+      throw new Error("Cannot check ChatGPT status.");
+    }
+    
+    if (status === 'ready') {
+      response = await extractResponseFromChatGPT();
+      break;
+    }
+    
+    // Wait if thinking
+    await new Promise(resolve => setTimeout(resolve, CHECK_INTERVAL));
+  }
+  
+  if (!response) {
+    throw new Error("Response timeout exceeded.");
+  }
+  
+  return response;
 } 

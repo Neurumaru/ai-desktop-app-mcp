@@ -3,7 +3,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { askChatGPT } from './chatgpt';
+import { askChatGPT, getChat } from './chatgpt';
 import { CHATGPT_TOOL, isChatGPTArgs } from './types';
 
 export const server = new Server(
@@ -48,6 +48,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               type: "text", 
               text: response || "No response received from ChatGPT."
             }],
+            isError: false
+          };
+        }
+
+        case "get_previous_response": {
+          const response = await getChat();
+          return {
+            content: [{ type: "text", text: response }],
             isError: false
           };
         }
