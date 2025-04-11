@@ -118,19 +118,18 @@ export async function getChatGPTStatus(): Promise<'ready' | 'thinking' | 'error'
               set targetGroup to group 2 of splitter group 1 of group 1 of window "ChatGPT"
               set allButtons to buttons of targetGroup
               set foundReadyButton to false
-              set buttonHelpText to ""
               
               -- Check all buttons
               repeat with currentButton in allButtons
-                -- Check button's help property
-                set buttonHelp to help of currentButton
-                set buttonHelpText to buttonHelpText & buttonHelp & ", "
-                
-                -- If help property is "음성 대화 시작", "음성 받아쓰기", or "메시지 보내기(⏎)", then ready
-                if buttonHelp is "음성 대화 시작" or buttonHelp is "음성 받아쓰기" or buttonHelp is "메시지 보내기(⏎)" then
-                  set foundReadyButton to true
-                  exit repeat
-                end if
+                try
+                  -- Check button's help property
+                  set buttonHelp to help of currentButton
+                  -- If help property is "음성 대화 시작", "음성 받아쓰기", or "메시지 보내기(⏎)", then ready
+                  if buttonHelp is "음성 대화 시작" or buttonHelp is "음성 받아쓰기" or buttonHelp is "메시지 보내기(⏎)" then
+                    set foundReadyButton to true
+                    exit repeat
+                  end if
+                end try
               end repeat
               
               if foundReadyButton then

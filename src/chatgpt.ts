@@ -9,50 +9,65 @@ export async function askChatGPT(prompt: string): Promise<string> {
     throw new Error("Another process is accessing ChatGPT. Please try again later.");
   }
   
+  let originalClipboard = "";
+  
   try {
-    await checkChatGPTAccess();
-    
-    // Check ChatGPT status
-    const initialStatus = await getChatGPTStatus();
-    if (initialStatus === 'error') {
-      throw new Error("Cannot check ChatGPT status.");
+    // Initial setup
+    try {
+      await checkChatGPTAccess();
+      
+      // Check ChatGPT status
+      const initialStatus = await getChatGPTStatus();
+      if (initialStatus === 'thinking') {
+        console.warn("ChatGPT is processing a previous response, but will continue trying.");
+      }
+      
+      // Enable web search
+      await enableWebSearch();
+      
+      originalClipboard = await saveClipboard();
+      
+      await sendInputToChatGPT(prompt);
+    } catch (setupError) {
+      console.error("Setup error:", setupError);
+      console.warn("Continuing despite setup error...");
     }
-    if (initialStatus === 'thinking') {
-      throw new Error("ChatGPT is still processing the previous response. Please try again later.");
-    }
-    
-    // Enable web search
-    await enableWebSearch();
-    
-    const originalClipboard = await saveClipboard();
-    
-    await sendInputToChatGPT(prompt);
     
     // Wait for response
     const startTime = Date.now();
     let response = "";
+    let lastError: unknown = null;
     
     while (Date.now() - startTime < WAIT_TIMEOUT) {
-      const status = await getChatGPTStatus();
-      
-      if (status === 'error') {
-        throw new Error("Cannot check ChatGPT status.");
+      try {
+        const status = await getChatGPTStatus();
+        
+        if (status === 'ready') {
+          response = await extractResponseFromChatGPT();
+          if (response) break;
+        }
+      } catch (loopError) {
+        lastError = loopError;
+        console.error("Error while checking status:", loopError);
       }
       
-      if (status === 'ready') {
-        response = await extractResponseFromChatGPT();
-        break;
-      }
-      
-      // Wait if thinking
+      // Wait before next attempt
       await new Promise(resolve => setTimeout(resolve, CHECK_INTERVAL));
     }
     
     if (!response) {
-      throw new Error("Response timeout exceeded.");
+      throw new Error(lastError 
+        ? `Response timeout exceeded. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+        : "Response timeout exceeded.");
     }
     
-    await restoreClipboard(originalClipboard);
+    if (originalClipboard) {
+      try {
+        await restoreClipboard(originalClipboard);
+      } catch (clipboardError) {
+        console.error("Error restoring clipboard:", clipboardError);
+      }
+    }
     
     return response;
   } catch (error) {
@@ -69,25 +84,29 @@ export async function askChatGPT(prompt: string): Promise<string> {
 export async function getChat(): Promise<string> {
   const startTime = Date.now();
   let response = "";
+  let lastError: unknown = null;
   
   while (Date.now() - startTime < WAIT_TIMEOUT) {
-    const status = await getChatGPTStatus();
-    
-    if (status === 'error') {
-      throw new Error("Cannot check ChatGPT status.");
+    try {
+      const status = await getChatGPTStatus();
+      
+      if (status === 'ready') {
+        response = await extractResponseFromChatGPT();
+        if (response) break;
+      }
+    } catch (error) {
+      lastError = error;
+      console.error("Error while checking status:", error);
     }
     
-    if (status === 'ready') {
-      response = await extractResponseFromChatGPT();
-      break;
-    }
-    
-    // Wait if thinking
+    // Wait before next attempt
     await new Promise(resolve => setTimeout(resolve, CHECK_INTERVAL));
   }
   
   if (!response) {
-    throw new Error("Response timeout exceeded.");
+    throw new Error(lastError 
+      ? `Response timeout exceeded. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+      : "Response timeout exceeded.");
   }
   
   return response;
