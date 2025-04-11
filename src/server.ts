@@ -4,7 +4,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { askChatGPT, getChat } from './chatgpt';
-import { CHATGPT_TOOL, isChatGPTArgs } from './types';
+import { ASK_CHATGPT_TOOL, GET_PREVIOUS_CHATGPT_TOOL } from './types';
 
 export const server = new Server(
   {
@@ -19,7 +19,7 @@ export const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [CHATGPT_TOOL],
+  tools: [ASK_CHATGPT_TOOL, GET_PREVIOUS_CHATGPT_TOOL],
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -30,39 +30,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new Error("No arguments provided");
     }
 
-    if (name === "chatgpt") {
-      if (!isChatGPTArgs(args)) {
-        throw new Error("Invalid arguments for ChatGPT tool");
+    if (name === "ask_chatgpt") {
+      if (!args.prompt) {
+        throw new Error("Prompt is required for ask operation");
       }
 
-      switch (args.operation) {
-        case "ask": {
-          if (!args.prompt) {
-            throw new Error("Prompt is required for ask operation");
-          }
-          
-          const response = await askChatGPT(args.prompt, args.conversation_id);
-          
-          return {
-            content: [{ 
-              type: "text", 
-              text: response || "No response received from ChatGPT."
-            }],
-            isError: false
-          };
-        }
+      const response = await askChatGPT(String(args.prompt));
 
-        case "get_previous_response": {
-          const response = await getChat();
-          return {
-            content: [{ type: "text", text: response }],
-            isError: false
-          };
-        }
-
-        default:
-          throw new Error(`Unknown operation: ${args.operation}`);
-      }
+      return {
+        content: [{ 
+          type: "text", 
+          text: response || "No response received from ChatGPT."
+        }],
+        isError: false
+      };
+    } else if (name === "get_previous_response") {
+      const response = await getChat();
+      return {
+        content: [{ type: "text", text: response }],
+        isError: false
+      };
     }
 
     return {

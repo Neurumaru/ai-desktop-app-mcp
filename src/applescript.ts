@@ -30,18 +30,12 @@ export async function checkChatGPTAccess(): Promise<boolean> {
   }
 }
 
-export async function sendInputToChatGPT(prompt: string, conversationId?: string): Promise<void> {
+export async function sendInputToChatGPT(prompt: string): Promise<void> {
   const inputScript = `
     tell application "ChatGPT"
       tell application "System Events"
         tell process "ChatGPT"
           try
-            ${conversationId ? `
-              -- Select conversation
-              click button "${conversationId}" of group 1 of group 1 of window "ChatGPT"
-              delay 0.5
-            ` : ''}
-            
             -- Find and set text area
             set textArea to text area 1 of scroll area 3 of group 2 of splitter group 1 of group 1 of window "ChatGPT"
             set value of textArea to "${prompt.replace(/"/g, '\\"')}"

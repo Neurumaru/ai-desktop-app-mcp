@@ -4,7 +4,7 @@ import { acquireLock, releaseLock } from './lock';
 const WAIT_TIMEOUT = 120 * 1000; // 120 seconds
 const CHECK_INTERVAL = 1000; // 1 second
 
-export async function askChatGPT(prompt: string, conversationId?: string): Promise<string> {
+export async function askChatGPT(prompt: string): Promise<string> {
   if (!(await acquireLock())) {
     throw new Error("Another process is accessing ChatGPT. Please try again later.");
   }
@@ -26,7 +26,7 @@ export async function askChatGPT(prompt: string, conversationId?: string): Promi
     
     const originalClipboard = await saveClipboard();
     
-    await sendInputToChatGPT(prompt, conversationId);
+    await sendInputToChatGPT(prompt);
     
     // Wait for response
     const startTime = Date.now();
