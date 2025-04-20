@@ -3,8 +3,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { askChatGPT, getChat } from './chatgpt';
-import { ASK_CHATGPT_TOOL, GET_PREVIOUS_CHATGPT_TOOL } from './types';
+import * as chatgptRouter from './chatgpt';
+import * as claudeRouter from './claude';
 
 export const server = new Server(
   {
@@ -19,52 +19,21 @@ export const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [ASK_CHATGPT_TOOL, GET_PREVIOUS_CHATGPT_TOOL],
+  tools: [...chatgptRouter.tools, ...claudeRouter.tools],
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  try {
-    const { name, arguments: args } = request.params;
-
-    if (!args) {
-      throw new Error("No arguments provided");
-    }
-
-    if (name === "ask_chatgpt") {
-      if (!args.prompt) {
-        throw new Error("Prompt is required for ask operation");
-      }
-
-      const response = await askChatGPT(String(args.prompt));
-
-      return {
-        content: [{ 
-          type: "text", 
-          text: response || "No response received from ChatGPT."
-        }],
-        isError: false
-      };
-    } else if (name === "get_previous_response") {
-      const response = await getChat();
-      return {
-        content: [{ type: "text", text: response }],
-        isError: false
-      };
-    }
-
-    return {
-      content: [{ type: "text", text: `Unknown tool: ${name}` }],
-      isError: true,
-    };
-  } catch (error) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-        },
-      ],
-      isError: true,
-    };
+  const { name, arguments: args } = request.params;
+  if (!args) {
+    throw new Error("No arguments provided");
   }
+  if (chatgptRouter.tools.some(tool => tool.name === name)) {
+    return chatgptRouter.handleTool(name, args);
+  } else if (claudeRouter.tools.some(tool => tool.name === name)) {
+    return claudeRouter.handleTool(name, args);
+  }
+  return {
+    content: [{ type: "text", text: `Unknown tool: ${name}` }],
+    isError: true,
+  };
 }); 
