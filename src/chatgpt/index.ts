@@ -1,4 +1,4 @@
-import { askChatGPT, getResponse } from './service';
+import { ask, getResponse } from './service';
 import { ASK_CHATGPT_TOOL, GET_PREVIOUS_CHATGPT_TOOL } from './types';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
@@ -22,7 +22,7 @@ export async function handleTool(name: string, args: any) {
       return {
         content: [{ 
           type: 'text', 
-          text: await askChatGPT(args.prompt, signal) 
+          text: await ask(args.prompt, signal) 
             || 'No response received from ChatGPT.' 
         }],
         isError: false,
