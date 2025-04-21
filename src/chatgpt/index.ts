@@ -22,7 +22,7 @@ export async function handleTool(name: string, args: any) {
       return {
         content: [{ 
           type: 'text', 
-          text: await ask(args.prompt, signal) 
+          text: await ask(signal, args.prompt) 
             || 'No response received from ChatGPT.' 
         }],
         isError: false,

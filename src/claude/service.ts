@@ -54,7 +54,7 @@ export async function ask(signal: AbortSignal, conversationId: string, prompt: s
     await transaction(async () => {
         if (await getStatus() === "inactive") {
             await launchScript();
-            await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+            await cancellableDelay(signal, DELAY, 'Timeout: Waiting for Claude to be ready');
         }
     });
 
@@ -70,15 +70,15 @@ export async function askNewChat(signal: AbortSignal, prompt: string): Promise<{
     let response = "";
     await transaction(async () => {
         await newChatScript();
-        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+        await cancellableDelay(signal, DELAY, 'Timeout: Waiting for Claude to be ready');
         await sendNewChatScript(prompt);
-        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+        await cancellableDelay(signal, DELAY, 'Timeout: Waiting for Claude to be ready');
 
         while (await getStatus() !== "ready") {
             if (signal.aborted) {
                 throw new Error('Timeout: Waiting for response from Claude on new chat');
             }
-            await cancellableDelay(INTERVAL, "Timeout: Waiting for response from Claude on new chat", signal);
+            await cancellableDelay(signal, INTERVAL, "Timeout: Waiting for response from Claude on new chat");
         }
         response = await getResponseScript();
         conversationId = await getConversationIdScript();
@@ -90,9 +90,9 @@ export async function askConversation(signal: AbortSignal, conversationId: strin
     let response = "";
     await transaction(async () => {
         await setConversationScript(conversationId);
-        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+        await cancellableDelay(signal, DELAY, 'Timeout: Waiting for Claude to be ready');
         await sendConversationScript(prompt);
-        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+        await cancellableDelay(signal, DELAY, 'Timeout: Waiting for Claude to be ready');
     });
     let loop = true;
     while (loop) {
@@ -101,7 +101,7 @@ export async function askConversation(signal: AbortSignal, conversationId: strin
         }
         await transaction(async () => {
             await setConversationScript(conversationId);
-            await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+            await cancellableDelay(signal, DELAY, 'Timeout: Waiting for Claude to be ready');
             const status = await getStatus();
             if (status !== "ready") {
                 return;
@@ -109,7 +109,7 @@ export async function askConversation(signal: AbortSignal, conversationId: strin
             response = await getResponseScript();
             loop = false;
         });
-        await cancellableDelay(INTERVAL, "Timeout: Waiting for response from Claude on conversation", signal);
+        await cancellableDelay(signal, INTERVAL, "Timeout: Waiting for response from Claude on conversation");
     }
     return {conversationId, response};
 }
@@ -129,7 +129,7 @@ export async function getResponse(signal: AbortSignal, conversationId: string): 
         let loop = true;
         await transaction(async () => {
             await setConversationScript(conversationId);
-            await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+            await cancellableDelay(signal, DELAY, 'Timeout: Waiting for Claude to be ready');
             if (await getStatus() !== "ready") {
                 return;
             }
@@ -140,7 +140,7 @@ export async function getResponse(signal: AbortSignal, conversationId: string): 
             break;
         }
 
-        await cancellableDelay(INTERVAL, "Timeout: Waiting for response from Claude on conversation", signal);
+        await cancellableDelay(signal, INTERVAL, "Timeout: Waiting for response from Claude on conversation");
     }
     return response;
 }
