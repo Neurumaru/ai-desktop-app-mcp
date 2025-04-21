@@ -2,14 +2,14 @@ import { getStatus, send, getResponse as getResponseAS, enableWebSearch, launch 
 import { saveClipboard, restoreClipboard } from '../common/applescript';
 import { cancellableDelay } from '../common/utils';
 
-const LAUNCH_DELAY = 2000;
-const CHECK_INTERVAL = 1000;
+const DELAY = 500;
+const INTERVAL = 1000;
 
-export async function askChatGPT(prompt: string, signal: AbortSignal): Promise<string> {
+export async function ask(prompt: string, signal: AbortSignal): Promise<string> {
   let status = await getStatus();
   if (status === 'inactive') {
     await launch();
-    await cancellableDelay(LAUNCH_DELAY, 'Timeout: Waiting for ChatGPT to be ready', signal);
+    await cancellableDelay(DELAY, 'Timeout: Waiting for ChatGPT to be ready', signal);
     status = await getStatus();
   }
   if (status === 'inactive' || status === 'error') {
@@ -17,7 +17,7 @@ export async function askChatGPT(prompt: string, signal: AbortSignal): Promise<s
   }
   while (status === 'running') {
     if (signal.aborted) throw new Error('Timeout: Waiting for ChatGPT to be ready');
-    await cancellableDelay(CHECK_INTERVAL, 'Timeout: Waiting for ChatGPT to be ready', signal);
+    await cancellableDelay(INTERVAL, 'Timeout: Waiting for ChatGPT to be ready', signal);
     status = await getStatus();
   }
       
@@ -44,7 +44,7 @@ export async function getResponse(signal: AbortSignal): Promise<string> {
     } catch (error) {
       lastError = error;
     }
-    await cancellableDelay(CHECK_INTERVAL, 'Timeout: Waiting for ChatGPT to be ready', signal);
+    await cancellableDelay(INTERVAL, 'Timeout: Waiting for ChatGPT to be ready', signal);
   }
   throw new Error('Timeout: Waiting for ChatGPT to be ready: ' + lastError);
 } 

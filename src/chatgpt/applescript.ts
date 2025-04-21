@@ -53,8 +53,6 @@ export async function getStatus(): Promise<Status> {
                             return "ready"
                         else if helpText is "${EXPECTED_VOICE_READ_BUTTON}" then
                             return "ready"
-                        else if helpText is "${EXPECTED_WEB_SEARCH_BUTTON}" then
-                            return "ready"
                         end if
                     end try
                 end repeat

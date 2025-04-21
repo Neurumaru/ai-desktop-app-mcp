@@ -1,12 +1,23 @@
 import { lock, LockOptions } from 'proper-lockfile';
 import * as os from 'os';
 import * as path from 'path';
-import { launch, newChat, setConversation, sendNewChat, getResponse as getResponseAS, getStatusNewChat, getStatusConversation, sendConversation, getConversationId, getConversations as getConversationsAS } from './applescript';
+import { 
+    launch as launchScript, 
+    newChat as newChatScript, 
+    setConversation as setConversationScript, 
+    sendNewChat as sendNewChatScript, 
+    getResponse as getResponseScript, 
+    getStatusNewChat as getStatusNewChatScript, 
+    getStatusConversation as getStatusConversationScript, 
+    sendConversation as sendConversationScript, 
+    getConversationId as getConversationIdScript, 
+    getConversations as getConversationsScript 
+} from './applescript';
 import { cancellableDelay } from '../common/utils';
 import { Status } from './types';
 
-const LAUNCH_DELAY = 2000;
-const CHECK_INTERVAL = 1000;
+const DELAY = 500;
+const INTERVAL = 10000;
 
 const lockfilePath = path.join(os.tmpdir(), 'claude-interaction.lock');
 const lockOptions: LockOptions = {
@@ -42,8 +53,8 @@ export async function transaction(func: () => Promise<void>) {
 export async function ask(signal: AbortSignal, conversationId: string, prompt: string): Promise<{response: string, conversationId: string}> {
     await transaction(async () => {
         if (await getStatus() === "inactive") {
-            await launch();
-            await cancellableDelay(LAUNCH_DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+            await launchScript();
+            await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
         }
     });
 
@@ -58,17 +69,19 @@ export async function askNewChat(signal: AbortSignal, prompt: string): Promise<{
     let conversationId = "제목 없음";
     let response = "";
     await transaction(async () => {
-        await newChat();
-        await sendNewChat(prompt);
+        await newChatScript();
+        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+        await sendNewChatScript(prompt);
+        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
 
         while (await getStatus() !== "ready") {
             if (signal.aborted) {
                 throw new Error('Timeout: Waiting for response from Claude on new chat');
             }
-            await cancellableDelay(CHECK_INTERVAL, "Timeout: Waiting for response from Claude on new chat", signal);
+            await cancellableDelay(INTERVAL, "Timeout: Waiting for response from Claude on new chat", signal);
         }
-        response = await getResponseAS();
-        conversationId = await getConversationId();
+        response = await getResponseScript();
+        conversationId = await getConversationIdScript();
     });
     return {conversationId, response};
 }
@@ -76,8 +89,10 @@ export async function askNewChat(signal: AbortSignal, prompt: string): Promise<{
 export async function askConversation(signal: AbortSignal, conversationId: string, prompt: string): Promise<{conversationId: string, response: string}> {
     let response = "";
     await transaction(async () => {
-        await setConversation(conversationId);
-        await sendConversation(prompt);
+        await setConversationScript(conversationId);
+        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+        await sendConversationScript(prompt);
+        await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
     });
     let loop = true;
     while (loop) {
@@ -85,51 +100,57 @@ export async function askConversation(signal: AbortSignal, conversationId: strin
             throw new Error('Timeout: Waiting for response from Claude on conversation');
         }
         await transaction(async () => {
-            await setConversation(conversationId);
+            await setConversationScript(conversationId);
+            await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
             const status = await getStatus();
             if (status !== "ready") {
                 return;
             }
-            response = await getResponseAS();
+            response = await getResponseScript();
             loop = false;
         });
-        await cancellableDelay(CHECK_INTERVAL, "Timeout: Waiting for response from Claude on conversation", signal);
+        await cancellableDelay(INTERVAL, "Timeout: Waiting for response from Claude on conversation", signal);
     }
     return {conversationId, response};
 }
 
 export async function getConversations(): Promise<string[]> {
-    return await getConversationsAS();
+    return await getConversationsScript();
 }
 
 export async function getResponse(signal: AbortSignal, conversationId: string): Promise<string> {
     let response = "";
 
-    let loop = true;
-    while (loop) {
+    while (true) {
         if (signal.aborted) {
             throw new Error('Timeout: Waiting for response from Claude on conversation');
         }
+
+        let loop = true;
         await transaction(async () => {
-            await setConversation(conversationId);
-            const status = await getStatus();
-            if (status !== "ready") {
+            await setConversationScript(conversationId);
+            await cancellableDelay(DELAY, 'Timeout: Waiting for Claude to be ready', signal);
+            if (await getStatus() !== "ready") {
                 return;
             }
-            response = await getResponseAS();
+            response = await getResponseScript();
             loop = false;
         });
-        await cancellableDelay(CHECK_INTERVAL, "Timeout: Waiting for response from Claude on conversation", signal);
+        if (!loop) {
+            break;
+        }
+
+        await cancellableDelay(INTERVAL, "Timeout: Waiting for response from Claude on conversation", signal);
     }
     return response;
 }
 
 export async function getStatus(): Promise<Status> {
     try {
-        if (await getStatusNewChat() === "ready") {
+        if (await getStatusNewChatScript() === "ready") {
             return "ready";
         }
-        return await getStatusConversation();
+        return await getStatusConversationScript();
     } catch (error) {
         throw new Error("Could not get status. Please try again.");
     }

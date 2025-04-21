@@ -3,13 +3,15 @@ import { scriptRunner } from '../common/applescript';
 
 const CLAUDE_UI_ELEMENT = `UI element 2 of group 1 of group 1 of group 1 of group 1 of window "Claude"`
 
-const CONVERSATIONS_GROUPS = `groups of list 1 of group 3 of group 1 of group 2 of group 1 of ${CLAUDE_UI_ELEMENT}`
-const CONVERSATIONS_OTHER_GROUPS = `groups of list 1 of group 3 of group 1 of group 2 of ${CLAUDE_UI_ELEMENT}`
+const CONVERSATIONS_GROUPS_FREE = `groups of list 1 of group 3 of group 1 of group 2 of group 1 of ${CLAUDE_UI_ELEMENT}`
+const CONVERSATIONS_OTHER_GROUPS_FREE = `groups of list 1 of group 3 of group 1 of group 2 of ${CLAUDE_UI_ELEMENT}`
+const CONVERSATIONS_GROUPS_PRO = `groups of list 1 of group 4 of group 1 of group 2 of group 1 of ${CLAUDE_UI_ELEMENT}`
+const CONVERSATIONS_OTHER_GROUPS_PRO = `groups of list 1 of group 4 of group 1 of group 2 of ${CLAUDE_UI_ELEMENT}`
 
 const CONVERSATIONS_UI_ELEMENT = `UI element 1 of group 1`
 const CONVERSATIONS_TITLE = `value of static text 1 of ${CONVERSATIONS_UI_ELEMENT}`
 
-const CONVERSATION_TITLE = `value of static text 1 of group 1 of pop up button 1 of group 1 of group 3 of group 1of ${CLAUDE_UI_ELEMENT}`
+const CONVERSATION_TITLE = `value of static text 1 of group 1 of pop up button 1 of group 1 of group 3 of group 1 of ${CLAUDE_UI_ELEMENT}`
 
 const NEW_CHAT_BUTTON = `UI element 1 of group 1 of group 1 of group 2 of group 1 of ${CLAUDE_UI_ELEMENT}`
 
@@ -21,6 +23,9 @@ const CONVERSATION_PAGE = `group 1 of group 2 of group 3 of group 1 of ${CLAUDE_
 const CONVERSATION_LAST_GROUP = `group (count of groups of ${CONVERSATION_PAGE}) of ${CONVERSATION_PAGE}`
 const CONVERSATION_PROMPT = `value of text area 1 of group 1 of group 1 of group 1 of group 1 of ${CONVERSATION_LAST_GROUP}`
 const CONVERSATION_SEND_BUTTON = `button 1 of group 4 of group 1 of group 1 of ${CONVERSATION_LAST_GROUP}`
+const CONVERSATION_STOP_BUTTON = `button 1 of group 1 of group 1 of ${CONVERSATION_LAST_GROUP}`
+const CONVERSATION_SEND_BUTTON_WHEN_OVER = `button 1 of group 4 of group 2 of group 1 of ${CONVERSATION_LAST_GROUP}`
+const CONVERSATION_STOP_BUTTON_WHEN_OVER = `button 1 of group 2 of group 1 of ${CONVERSATION_LAST_GROUP}`
 const CONVERSATION_ELEMENTS = ` entire contents of ${CONVERSATION_PAGE}`
 
 const EXPECTED_SEND_BUTTON_DESCRIPTION = "메시지 보내기"
@@ -52,7 +57,7 @@ export async function setConversation(conversationId: string): Promise<void> {
         tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
-                    repeat with g in ${CONVERSATIONS_GROUPS}
+                    repeat with g in ${CONVERSATIONS_GROUPS_PRO}
                         if ${CONVERSATIONS_TITLE} of g is "${conversationId}" then
                             click ${CONVERSATIONS_UI_ELEMENT} of g
                             exit repeat
@@ -102,22 +107,38 @@ export async function getConversations(): Promise<string[]> {
                         set conversationTitles to {}
                         
                         -- Get conversation titles
-                        try
-                            repeat with g in ${CONVERSATIONS_GROUPS}
-                                try
-                                    set end of conversationTitles to ${CONVERSATIONS_TITLE} of g
-                                on error
-                                    set end of conversationTitles to "Unknown"
-                                end try
-                            end repeat
+                        try 
+                            try
+                                repeat with g in ${CONVERSATIONS_GROUPS_PRO}
+                                    try
+                                        set end of conversationTitles to ${CONVERSATIONS_TITLE} of g
+                                    on error
+                                        set end of conversationTitles to "Unknown"
+                                    end try
+                                end repeat
+                            on error
+                                repeat with g in ${CONVERSATIONS_OTHER_GROUPS_PRO}
+                                    try
+                                        set end of conversationTitles to ${CONVERSATIONS_TITLE} of g
+                                    on error
+                                        set end of conversationTitles to "Unknown"
+                                    end try
+                                end repeat
+                            end try
                         on error
-                            repeat with g in ${CONVERSATIONS_OTHER_GROUPS}
-                                try
-                                    set end of conversationTitles to ${CONVERSATIONS_TITLE} of g
-                                on error
-                                    set end of conversationTitles to "Unknown"
-                                end try
-                            end repeat
+                            try
+                                repeat with g in ${CONVERSATIONS_GROUPS_FREE}
+                                    try
+                                        set end of conversationTitles to ${CONVERSATIONS_TITLE} of g
+                                    end try
+                                end repeat
+                            on error
+                                repeat with g in ${CONVERSATIONS_OTHER_GROUPS_FREE}
+                                    try
+                                        set end of conversationTitles to ${CONVERSATIONS_TITLE} of g
+                                    end try
+                                end repeat
+                            end try
                         end try
 
                         -- Return conversation titles as a single string
@@ -202,13 +223,25 @@ export async function getStatusConversation(): Promise<Status> {
                     try
                         if (description of ${CONVERSATION_SEND_BUTTON}) is "${EXPECTED_SEND_BUTTON_DESCRIPTION}" then
                             return "ready"
-                        else
+                        end if
+                    end try
+                    try
+                        if (description of ${CONVERSATION_SEND_BUTTON_WHEN_OVER}) is "${EXPECTED_SEND_BUTTON_DESCRIPTION}" then
+                            return "ready"
+                        end if
+                    end try
+                    try
+                        if (exists ${CONVERSATION_STOP_BUTTON}) then
                             return "running"
                         end if
-                    on error
-                        return "error"
+                    end try
+                    try
+                        if (description of ${CONVERSATION_STOP_BUTTON_WHEN_OVER}) is "${EXPECTED_SEND_BUTTON_DESCRIPTION}" then
+                            return "running"
+                        end if
                     end try
                 end tell
+                return "error"
             end tell
         end tell
          `);
