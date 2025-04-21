@@ -139,7 +139,7 @@ export function registerChatGPTCommands(program: Command) {
                     process.exit(1);
                 });
                 console.log(`'${options.prompt}' 입력 전송 중...`);
-                const response = await ask(options.prompt, signal);
+                const response = await ask(signal, options.prompt);
                 console.log('✅ 입력 전송에 성공했습니다.');
                 console.log(response);
                 process.exit(0);
