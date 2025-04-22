@@ -1,23 +1,27 @@
-# Claude ChatGPT MCP Tool
+# AI Desktop App MCP Tool
 
-> ⚠️ **Warning**: This tool currently only works with the Korean version of ChatGPT desktop app. The button names and UI elements are hardcoded in Korean.
+> ⚠️ **Warning**: This tool currently only works with the Korean version of ChatGPT and Claude desktop app. The button names and UI elements are hardcoded in Korean.
 
-This is a Model Context Protocol (MCP) tool that allows Claude to interact with the ChatGPT desktop app on macOS.
+This is a Model Context Protocol (MCP) tool that allows Cursor to interact with the ChatGPT and Claude desktop app on macOS.
 
 ## Features
 
-- Ask ChatGPT questions directly from Claude
-- View ChatGPT conversation history
-- Continue existing ChatGPT conversations
+- Ask ChatGPT and Claude from Cursor
+- View Claude conversation history
+- Get ChatGPT and Claude previous response
 
 ## Installation
 
 ### Prerequisites
 
-- macOS with M1/M2/M3 chip
+- macOS with M4 chip
 - [ChatGPT desktop app](https://chatgpt.com/download) installed
-- [Bun](https://bun.sh/) installed
+    - ChatGPT Plus subscription  
+      (A subscription may not be required, but testing was done only with an active subscription.)
 - [Claude desktop app](https://claude.ai/desktop) installed
+    - Claude Pro subscription  
+      (A subscription may not be required, but testing was done only with an active subscription.)
+- [Bun](https://bun.sh/) installed
 
 ### Installation Steps
 
@@ -40,25 +44,25 @@ bun install
 chmod +x index.ts
 ```
 
-4. Update your Claude Desktop configuration:
+4. Update your Cursor MCP configuration:
 
-Edit your `claude_desktop_config.json` file (located at `~/Library/Application Support/Claude/claude_desktop_config.json`) to include this tool:
+Edit your MCP Server configuration file (Cursor Settings > MCP > Add new global MCP Server):
 
 ```json
-"chatgpt-mcp": {
+"ai-desktop-app-mcp": {
   "command": "/Users/YOURUSERNAME/.bun/bin/bun",
-  "args": ["run", "/path/to/claude-chatgpt-mcp/index.ts"]
+  "args": ["run", "/path/to/ai-desktop-app-mcp/index.ts"]
 }
 ```
 
 Make sure to replace `YOURUSERNAME` with your actual macOS username and adjust the path to where you cloned this repository.
 
-5. Restart Claude Desktop app
+5. Restart Cursor
 
 6. Grant permissions:
-   - Go to System Preferences > Privacy & Security > Privacy
-   - Give Terminal (or iTerm) access to Accessibility features
-   - You may see permission prompts when the tool is first used
+    - Go to System Preferences > Privacy & Security > Accessibility
+    - Give Cursor access to Accessibility features
+    - You may see permission prompts when the tool is first used
 
 ## Usage
 
@@ -68,15 +72,6 @@ Once installed, you can use the ChatGPT tool directly from Claude by asking ques
 - "Show me my recent ChatGPT conversations"
 - "Ask ChatGPT to explain quantum computing"
 
-## Troubleshooting
-
-If the tool isn't working properly:
-
-1. Make sure ChatGPT app is installed and you're logged in
-2. Verify the path to bun in your claude_desktop_config.json is correct
-3. Check that you've granted all necessary permissions
-4. Try restarting both Claude and ChatGPT apps
-
 ## License
 
-MIT
+MIT License

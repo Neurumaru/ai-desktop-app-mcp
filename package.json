@@ -1,36 +1,37 @@
 {
-  "name": "ai-desktop-app-mcp",
-  "version": "1.0.0",
-  "module": "index.ts",
-  "type": "module",
-  "description": "A Claude MCP tool to interact with the ChatGPT and Claude desktop apps on macOS",
-  "author": "Neurumaru",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/neurumaru/ai-desktop-app-mcp.git"
-  },
-  "keywords": [
-    "mcp",
-    "chatgpt",
-    "claude",
-    "macos"
-  ],
-  "scripts": {
-    "serve": "bun run index.ts",
-    "command": "bun run src/command/index.ts"
-  },
-  "dependencies": {
-    "@jxa/global-type": "^1.3.6",
-    "@jxa/run": "^1.3.6",
-    "@modelcontextprotocol/sdk": "^1.5.0",
-    "@types/proper-lockfile": "^4.1.4",
-    "commander": "^13.1.0",
-    "proper-lockfile": "^4.1.2",
-    "run-applescript": "^7.0.0"
-  },
-  "devDependencies": {  
-    "@types/bun": "latest",
-    "@types/node": "^22.13.4"
-  }
+    "name": "ai-desktop-app-mcp",
+    "version": "1.0.0",
+    "module": "index.ts",
+    "type": "module",
+    "description": "A Claude MCP tool to interact with the ChatGPT and Claude desktop apps on macOS",
+    "author": "Neurumaru",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/neurumaru/ai-desktop-app-mcp.git"
+    },
+    "keywords": [
+        "mcp",
+        "chatgpt",
+        "claude",
+        "macos"
+    ],
+    "scripts": {
+        "serve": "bun run index.ts",
+        "command": "bun run src/command/index.ts"
+    },
+    "dependencies": {
+        "@jxa/global-type": "^1.3.6",
+        "@jxa/run": "^1.3.6",
+        "@modelcontextprotocol/sdk": "^1.5.0",
+        "@types/proper-lockfile": "^4.1.4",
+        "commander": "^13.1.0",
+        "proper-lockfile": "^4.1.2",
+        "run-applescript": "^7.0.0"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/node": "^22.13.4",
+        "prettier": "^3.5.3"
+    }
 }
