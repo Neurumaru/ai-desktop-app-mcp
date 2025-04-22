@@ -1,17 +1,17 @@
-import { Status } from './types';
-import { scriptRunner } from '../common/applescript';
+import { Status } from "./types";
+import { scriptRunner } from "../common/applescript";
 
-const PAGE = `splitter group 1 of group 1 of window "ChatGPT"`
-const PROMPT = `value of text area 1 of scroll area 3 of group 2 of ${PAGE}`
-const BUTTON_GROUP = `group 2 of ${PAGE}`
-const BUTTONS = `buttons of ${BUTTON_GROUP}`
-const ALL_ELEMENTS = `entire contents of ${PAGE}`
+const PAGE = `splitter group 1 of group 1 of window "ChatGPT"`;
+const PROMPT = `value of text area 1 of scroll area 3 of group 2 of ${PAGE}`;
+const BUTTON_GROUP = `group 2 of ${PAGE}`;
+const BUTTONS = `buttons of ${BUTTON_GROUP}`;
+const ALL_ELEMENTS = `entire contents of ${PAGE}`;
 
-const EXPECTED_VOICE_START_BUTTON = "음성 대화 시작"
-const EXPECTED_VOICE_READ_BUTTON = "음성 받아쓰기"
-const EXPECTED_WEB_SEARCH_BUTTON = "웹 검색하기"
-const EXPECTED_SEND_BUTTON = "메시지 보내기(⏎)"
-const EXPECTED_MESSAGES_ROLE = "AXStaticText"
+const EXPECTED_VOICE_START_BUTTON = "음성 대화 시작";
+const EXPECTED_VOICE_READ_BUTTON = "음성 받아쓰기";
+const EXPECTED_WEB_SEARCH_BUTTON = "웹 검색하기";
+const EXPECTED_SEND_BUTTON = "메시지 보내기(⏎)";
+const EXPECTED_MESSAGES_ROLE = "AXStaticText";
 
 /**
  * ChatGPT 앱을 실행시킵니다.
@@ -24,7 +24,9 @@ export async function launch(): Promise<boolean> {
         `);
         return true;
     } catch (error) {
-        throw new Error("Could not activate ChatGPT app. Please start it manually.");
+        throw new Error(
+            "Could not activate ChatGPT app. Please start it manually.",
+        );
     }
 }
 
@@ -33,8 +35,8 @@ export async function launch(): Promise<boolean> {
  * @returns Promise<Status> - 앱의 현재 상태
  */
 export async function getStatus(): Promise<Status> {
-  try {
-    return await scriptRunner.runAppleScript(`
+    try {
+        return (await scriptRunner.runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             if not (application process "ChatGPT" exists) then
@@ -60,7 +62,7 @@ export async function getStatus(): Promise<Status> {
             end tell
         end tell
     end tell
-    `) as Status;
+    `)) as Status;
     } catch (error) {
         throw new Error("Could not get status. Please try again.");
     }
@@ -72,8 +74,8 @@ export async function getStatus(): Promise<Status> {
  * @returns Promise<void> - 입력 성공 시 비동기적으로 완료됨
  */
 export async function send(prompt: string): Promise<void> {
-  try {
-    await scriptRunner.runAppleScript(`
+    try {
+        await scriptRunner.runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             tell process "ChatGPT"
@@ -103,8 +105,8 @@ export async function send(prompt: string): Promise<void> {
  * @returns Promise<string> - 응답 문자열
  */
 export async function getResponse(): Promise<string> {
-  try {
-    return await scriptRunner.runAppleScript(`
+    try {
+        return await scriptRunner.runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             tell process "ChatGPT"
@@ -128,9 +130,9 @@ export async function getResponse(): Promise<string> {
         end tell
     end tell
   `);
-  } catch (error) {
-    throw new Error("Could not get response. Please try again.");
-  }
+    } catch (error) {
+        throw new Error("Could not get response. Please try again.");
+    }
 }
 
 /**
@@ -138,8 +140,8 @@ export async function getResponse(): Promise<string> {
  * @returns Promise<void> - 활성화 성공 시 비동기적으로 완료됨
  */
 export async function enableWebSearch(): Promise<void> {
-  try {
-    await scriptRunner.runAppleScript(`
+    try {
+        await scriptRunner.runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             tell process "ChatGPT"
@@ -171,7 +173,7 @@ export async function enableWebSearch(): Promise<void> {
         end tell
     end tell
   `);
-  } catch (error) {
-    throw new Error("Could not enable web search. Please try again.");
-  }
-} 
+    } catch (error) {
+        throw new Error("Could not enable web search. Please try again.");
+    }
+}
