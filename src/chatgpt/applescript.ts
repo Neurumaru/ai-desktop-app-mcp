@@ -1,5 +1,5 @@
 import { Status } from "./types";
-import { scriptRunner } from "../common/applescript";
+import { runAppleScript } from "run-applescript";
 
 const PAGE = `splitter group 1 of group 1 of window "ChatGPT"`;
 const PROMPT = `value of text area 1 of scroll area 3 of group 2 of ${PAGE}`;
@@ -19,7 +19,7 @@ const EXPECTED_MESSAGES_ROLE = "AXStaticText";
  */
 export async function launch(): Promise<boolean> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
         tell application "ChatGPT" to activate
         `);
         return true;
@@ -36,7 +36,7 @@ export async function launch(): Promise<boolean> {
  */
 export async function getStatus(): Promise<Status> {
     try {
-        return (await scriptRunner.runAppleScript(`
+        return (await runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             if not (application process "ChatGPT" exists) then
@@ -75,7 +75,7 @@ export async function getStatus(): Promise<Status> {
  */
 export async function send(prompt: string): Promise<void> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             tell process "ChatGPT"
@@ -106,7 +106,7 @@ export async function send(prompt: string): Promise<void> {
  */
 export async function getResponse(): Promise<string> {
     try {
-        return await scriptRunner.runAppleScript(`
+        return await runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             tell process "ChatGPT"
@@ -141,7 +141,7 @@ export async function getResponse(): Promise<string> {
  */
 export async function enableWebSearch(): Promise<void> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
     tell application "ChatGPT"
         tell application "System Events"
             tell process "ChatGPT"

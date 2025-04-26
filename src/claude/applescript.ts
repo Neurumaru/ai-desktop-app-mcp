@@ -1,5 +1,5 @@
 import { Status } from "./types";
-import { scriptRunner } from "../common/applescript";
+import { runAppleScript } from "run-applescript";
 
 const CLAUDE_UI_ELEMENT = `UI element 2 of group 1 of group 1 of group 1 of group 1 of window "Claude"`;
 
@@ -37,7 +37,7 @@ const EXPECTED_MESSAGES_ROLE = "AXStaticText";
  */
 export async function launch(): Promise<boolean> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
             tell application "Claude" to activate
             tell application "System Events"
                 tell process "Claude"
@@ -60,7 +60,7 @@ export async function launch(): Promise<boolean> {
  */
 export async function setConversation(conversationId: string): Promise<void> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
@@ -87,7 +87,7 @@ export async function setConversation(conversationId: string): Promise<void> {
  */
 export async function getConversationId(): Promise<string> {
     try {
-        const result = await scriptRunner.runAppleScript(`
+        const result = await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
@@ -109,7 +109,7 @@ export async function getConversationId(): Promise<string> {
  */
 export async function getConversations(): Promise<string[]> {
     try {
-        const result = await scriptRunner.runAppleScript(`
+        const result = await runAppleScript(`
             tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
@@ -155,7 +155,7 @@ export async function getConversations(): Promise<string[]> {
  */
 export async function newChat(): Promise<void> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
@@ -176,7 +176,7 @@ export async function newChat(): Promise<void> {
  */
 export async function getStatusNewChat(): Promise<Status> {
     try {
-        const result = await scriptRunner.runAppleScript(`
+        const result = await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 if not (application process "Claude" exists) then
@@ -208,7 +208,7 @@ export async function getStatusNewChat(): Promise<Status> {
  */
 export async function getStatusConversation(): Promise<Status> {
     try {
-        const result = await scriptRunner.runAppleScript(`
+        const result = await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 if not (application process "Claude" exists) then
@@ -255,7 +255,7 @@ export async function getStatusConversation(): Promise<Status> {
  */
 export async function sendNewChat(prompt: string): Promise<void> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
@@ -278,7 +278,7 @@ export async function sendNewChat(prompt: string): Promise<void> {
  */
 export async function sendConversation(prompt: string): Promise<void> {
     try {
-        await scriptRunner.runAppleScript(`
+        await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
@@ -300,7 +300,7 @@ export async function sendConversation(prompt: string): Promise<void> {
  */
 export async function getResponse(): Promise<string> {
     try {
-        const result = await scriptRunner.runAppleScript(`
+        const result = await runAppleScript(`
         tell application "Claude"
             tell application "System Events"
                 tell process "Claude"
