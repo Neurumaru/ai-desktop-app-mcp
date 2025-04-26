@@ -13,7 +13,6 @@
 import { Command } from "commander";
 import { registerChatGPTCommands } from "./chatgpt";
 import { registerClaudeCommands } from "./claude";
-import { registerClipboardCommands } from "./clipboard";
 
 const program = new Command();
 
@@ -25,7 +24,6 @@ program
 // 각 기능별 명령어 등록
 registerChatGPTCommands(program);
 registerClaudeCommands(program);
-registerClipboardCommands(program);
 
 // 명령어를 찾지 못했을 때 도움말 표시
 program.on("command:*", ([cmd]) => {
