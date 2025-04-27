@@ -2,22 +2,13 @@ import { lock, LockOptions } from "proper-lockfile";
 import * as os from "os";
 import * as path from "path";
 import {
-    launch as launchScript,
-    newChat as newChatScript,
-    setConversation as setConversationScript,
-    sendNewChat as sendNewChatScript,
-    getResponse as getResponseScript,
-    getStatusNewChat as getStatusNewChatScript,
-    getStatusConversation as getStatusConversationScript,
-    sendConversation as sendConversationScript,
-    getConversationId as getConversationIdScript,
-    getConversations as getConversationsScript,
-} from "./applescript";
+    ClaudeScript,
+} from "./applescript/index";
 import { cancellableDelay } from "../common/utils";
 import { Status } from "./types";
 
 const DELAY = 500;
-const INTERVAL = 10000;
+const INTERVAL = 1000;
 
 const lockfilePath = path.join(os.tmpdir(), "claude-interaction.lock");
 const lockOptions: LockOptions = {
@@ -31,6 +22,8 @@ const lockOptions: LockOptions = {
     realpath: false,
     stale: 60000,
 };
+
+const claudeScript = new ClaudeScript();
 
 export async function transaction(func: () => Promise<void>) {
     let release: (() => Promise<void>) | undefined;
@@ -58,8 +51,8 @@ export async function ask(
     prompt: string,
 ): Promise<{ response: string; conversationId: string }> {
     await transaction(async () => {
-        if ((await getStatus()) === "inactive") {
-            await launchScript();
+        if ((await getStatus()) === "error") {
+            await claudeScript.launch();
             await cancellableDelay(
                 signal,
                 DELAY,
@@ -82,13 +75,13 @@ export async function askNewChat(
     let conversationId = "제목 없음";
     let response = "";
     await transaction(async () => {
-        await newChatScript();
+        await claudeScript.newChat();
         await cancellableDelay(
             signal,
             DELAY,
             "Timeout: Waiting for Claude to be ready",
         );
-        await sendNewChatScript(prompt);
+        await claudeScript.sendNewChat(prompt);
         await cancellableDelay(
             signal,
             DELAY,
@@ -107,8 +100,8 @@ export async function askNewChat(
                 "Timeout: Waiting for response from Claude on new chat",
             );
         }
-        response = await getResponseScript();
-        conversationId = await getConversationIdScript();
+        response = await claudeScript.getResponse();
+        conversationId = await claudeScript.getConversationId();
     });
     return { conversationId, response };
 }
@@ -120,13 +113,13 @@ export async function askConversation(
 ): Promise<{ conversationId: string; response: string }> {
     let response = "";
     await transaction(async () => {
-        await setConversationScript(conversationId);
+        await claudeScript.setConversation(conversationId);
         await cancellableDelay(
             signal,
             DELAY,
             "Timeout: Waiting for Claude to be ready",
         );
-        await sendConversationScript(prompt);
+        await claudeScript.sendConversation(prompt);
         await cancellableDelay(
             signal,
             DELAY,
@@ -141,7 +134,7 @@ export async function askConversation(
             );
         }
         await transaction(async () => {
-            await setConversationScript(conversationId);
+            await claudeScript.setConversation(conversationId);
             await cancellableDelay(
                 signal,
                 DELAY,
@@ -151,7 +144,7 @@ export async function askConversation(
             if (status !== "ready") {
                 return;
             }
-            response = await getResponseScript();
+            response = await claudeScript.getResponse();
             loop = false;
         });
         await cancellableDelay(
@@ -164,7 +157,7 @@ export async function askConversation(
 }
 
 export async function getConversations(): Promise<string[]> {
-    return await getConversationsScript();
+    return await claudeScript.getConversations();
 }
 
 export async function getResponse(
@@ -182,7 +175,7 @@ export async function getResponse(
 
         let loop = true;
         await transaction(async () => {
-            await setConversationScript(conversationId);
+            await claudeScript.setConversation(conversationId);
             await cancellableDelay(
                 signal,
                 DELAY,
@@ -191,7 +184,7 @@ export async function getResponse(
             if ((await getStatus()) !== "ready") {
                 return;
             }
-            response = await getResponseScript();
+            response = await claudeScript.getResponse();
             loop = false;
         });
         if (!loop) {
@@ -209,10 +202,10 @@ export async function getResponse(
 
 export async function getStatus(): Promise<Status> {
     try {
-        if ((await getStatusNewChatScript()) === "ready") {
+        if ((await claudeScript.getStatusNewChat()) === "ready") {
             return "ready";
         }
-        return await getStatusConversationScript();
+        return await claudeScript.getStatusConversation();
     } catch (error) {
         throw new Error("Could not get status. Please try again.");
     }
