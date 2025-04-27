@@ -1,44 +1,148 @@
-// dynamic import wrapper for runAppleScript to avoid ESM static import issues
-async function runAppleScriptWrapper(script: string): Promise<string> {
-    // Use dynamic import for run-applescript
-    const { runAppleScript } = await import("run-applescript");
-    try {
-        // console.debug("Executing AppleScript:\n", script); // Optional: Log script for debugging
-        const result = await runAppleScript(script);
-        // console.debug("AppleScript Result:", result); // Optional: Log result
-        return result;
-    } catch (error: any) {
-        console.error("AppleScript execution failed:", error);
-        console.error("Failed Script:\n", script); // Log the script that failed
-        // Rethrow or return a specific error indicator string
-        throw new Error(
-            `AppleScript execution failed: ${error.message || error}`,
-        );
+import { runAppleScript } from "run-applescript";
+
+export class AppleScript {
+    private process: string;
+
+    constructor(process: string) {
+        this.process = process;
     }
-}
 
-export const scriptRunner = { runAppleScript: runAppleScriptWrapper };
+    async launch(): Promise<void> {
+        try {
+            await runAppleScript(`
+            tell application "${this.process}" to activate
+            `);
+        } catch (error) {
+            throw new Error("Could not launch application");
+        }
+    }
 
-/**
- * 클립보드를 저장하는 함수
- * @returns Promise<string> - 저장된 클립보드 내용
- */
-export async function saveClipboard(): Promise<string> {
-    const saveClipboardScript = `
-      set originalClipboard to the clipboard
-      return originalClipboard
-    `;
-    return await scriptRunner.runAppleScript(saveClipboardScript);
-}
+    async click(element: string): Promise<void> {
+        try {
+            await runAppleScript(`
+            tell application "System Events"
+                tell process "${this.process}"
+                    click ${element}
+                end tell
+            end tell
+            `);
+        } catch (error) {
+            throw new Error("Could not click element");
+        }
+    }
 
-/**
- * 클립보드를 복원하는 함수
- * @param content - 복원할 클립보드 내용
- * @returns Promise<void> - 복원 성공 시 비동기적으로 완료됨
- */
-export async function restoreClipboard(content: string): Promise<void> {
-    const escapedContent = content.replace(/"/g, '\"');
-    await scriptRunner.runAppleScript(
-        `set the clipboard to "${escapedContent}"`,
-    );
+    async query(select: string, from: string, where: string): Promise<string> {
+        try {
+            const result = await runAppleScript(`
+            tell application "System Events"
+                tell process "${this.process}"
+                    repeat with current in ${from}
+                        if ${where} then
+                            return ${select}
+                        end if
+                    end repeat
+
+                    return ""
+                end tell
+            end tell
+            `);
+            return result;
+        } catch (error) {
+            throw new Error("Could not query element");
+        }
+    }
+
+    async queryAll(select: string, from: string, where: string): Promise<string[]> {
+        try {
+            const result = await runAppleScript(`
+            tell application "System Events"
+                tell process "${this.process}"
+                    set allElements to ${from}
+                    set qeuryResult to {}
+                    repeat with current in allElements
+                        if ${where} then
+                            set end of qeuryResult to ${select}
+                        end if
+                    end repeat
+                    set AppleScript's text item delimiters to linefeed
+                    return qeuryResult as text
+                end tell
+            end tell
+            `);
+            return result.split("\n");
+        } catch (error) {
+            throw new Error("Could not query element");
+        }
+    }
+
+    async list(from: string): Promise<string[]> {
+        try {
+            const result = await runAppleScript(`
+            tell application "System Events"
+                tell process "${this.process}"
+                    return ${from}
+                end tell
+            end tell
+            `, {humanReadableOutput: false});
+            return result.split(`of application process "${this.process}" of application "System Events", `);
+        } catch (error) {
+            throw new Error("Could not list element");
+        }
+    }
+
+    async fetch(element: string): Promise<string> {
+        try {
+            const result = await runAppleScript(`
+            tell application "System Events"
+                tell process "${this.process}"
+                    return ${element}
+                end tell
+            end tell
+            `);
+            return result;
+        } catch (error) {
+            throw new Error("Could not fetch element");
+        }
+    }
+
+    async exists(element: string): Promise<boolean> {
+        try {
+            const result = await runAppleScript(`
+            tell application "System Events"
+                tell process "${this.process}"
+                    if (exists ${element}) then
+                        return "true"
+                    else
+                        return "false"
+                    end if
+                end tell
+            end tell
+            `);
+            return result == "true";
+        } catch (error) {
+            throw new Error("Could not check if element exists");
+        }
+    }
+
+    async set(element: string, value: string): Promise<void> {
+        try {
+            await runAppleScript(`
+            tell application "System Events"
+                tell process "${this.process}"
+                    set ${element} to ${value}
+                end tell
+            end tell
+            `);
+        } catch (error) {
+            throw new Error("Could not set element");
+        }
+    }
+
+    async enableAccessibility(): Promise<void> {
+        try {
+            await this.set(`value of attribute "AXManualAccessibility"`, "true");
+        } catch (error) {
+            throw new Error("Could not enable accessibility");
+        }
+    }
 }

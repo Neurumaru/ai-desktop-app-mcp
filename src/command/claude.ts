@@ -1,21 +1,14 @@
 import { Command } from "commander";
 import {
-    launch as launchScript,
-    setConversation as setConversationScript,
-    getConversationId as getConversationIdScript,
-    getConversations as getConversationsScript,
-    newChat as newChatScript,
-    getStatusNewChat as getStatusNewChatScript,
-    getStatusConversation as getStatusConversationScript,
-    sendNewChat as sendNewChatScript,
-    sendConversation as sendConversationScript,
-    getResponse as getResponseScript,
-} from "../claude/applescript";
+    ClaudeScript,
+} from "../claude/applescript/index";
 import {
     ask as askService,
     getResponse as getResponseService,
     getConversations as getConversationsService,
 } from "../claude/service";
+
+const claudeScript = new ClaudeScript();
 
 export function registerClaudeCommands(program: Command) {
     const claudeCommand = program
@@ -36,7 +29,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async () => {
             try {
                 console.log("Claude 대화 목록 가져오기 중...");
-                const conversations = await getConversationsScript();
+                const conversations = await claudeScript.getConversations();
                 console.log("✅ Claude 대화 목록 가져오기 성공:");
                 console.log("---");
                 console.log(conversations.join("\n"));
@@ -57,12 +50,8 @@ export function registerClaudeCommands(program: Command) {
         .action(async () => {
             try {
                 console.log("Claude 앱 실행 중...");
-                const success = await launchScript();
-                if (success) {
-                    console.log("✅ Claude 앱 실행 성공.");
-                } else {
-                    console.log("⚠️ Claude 앱 실행 완료 (결과 불확실).");
-                }
+                await claudeScript.launch();
+                console.log("✅ Claude 앱 실행 성공.");
                 process.exit(0);
             } catch (error) {
                 console.error(
@@ -79,7 +68,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async (id: string) => {
             try {
                 console.log(`'${id}' 대화로 전환 중...`);
-                await setConversationScript(id);
+                await claudeScript.setConversation(id);
                 console.log(`✅ '${id}' 대화로 전환 성공.`);
                 process.exit(0);
             } catch (error) {
@@ -97,7 +86,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async () => {
             try {
                 console.log("현재 대화 ID 가져오기 중...");
-                const conversationId = await getConversationIdScript();
+                const conversationId = await claudeScript.getConversationId();
                 console.log("✅ 현재 대화 ID:", conversationId);
                 process.exit(0);
             } catch (error) {
@@ -115,7 +104,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async () => {
             try {
                 console.log("새 대화 시작 중...");
-                await newChatScript();
+                await claudeScript.newChat();
                 console.log("✅ 새 대화 시작 성공.");
                 process.exit(0);
             } catch (error) {
@@ -133,7 +122,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async () => {
             try {
                 console.log("Claude 상태 확인 중...");
-                const status = await getStatusNewChatScript();
+                const status = await claudeScript.getStatusNewChat();
                 console.log("✅ Claude 상태:", status);
                 process.exit(0);
             } catch (error) {
@@ -151,7 +140,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async () => {
             try {
                 console.log("Claude 상태 확인 중...");
-                const status = await getStatusConversationScript();
+                const status = await claudeScript.getStatusConversation();
                 console.log("✅ Claude 상태:", status);
                 process.exit(0);
             } catch (error) {
@@ -171,7 +160,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async (prompt: string) => {
             try {
                 console.log(`메시지 전송 중: "${prompt}"`);
-                await sendNewChatScript(prompt);
+                await claudeScript.sendNewChat(prompt);
                 console.log("✅ 메시지 전송 성공.");
                 process.exit(0);
             } catch (error) {
@@ -189,7 +178,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async (prompt: string) => {
             try {
                 console.log(`메시지 전송 중: "${prompt}"`);
-                await sendConversationScript(prompt);
+                await claudeScript.sendConversation(prompt);
                 console.log("✅ 메시지 전송 성공.");
                 process.exit(0);
             } catch (error) {
@@ -207,7 +196,7 @@ export function registerClaudeCommands(program: Command) {
         .action(async () => {
             try {
                 console.log("응답 가져오기 중...");
-                const response = await getResponseScript();
+                const response = await claudeScript.getResponse();
                 console.log("✅ 응답 가져오기 성공:");
                 console.log("---");
                 console.log(response);
