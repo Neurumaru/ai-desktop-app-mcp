@@ -138,11 +138,30 @@ export class AppleScript {
         }
     }
 
+    async getClipboard(): Promise<string> {
+        try {
+            const result = await runAppleScript(`
+            the clipboard as text
+            `);
+            return result;
+        } catch (error) {
+            throw new Error(`Could not get clipboard: ${error}`);
+        }
+    }
+
+    async setClipboard(value: string): Promise<void> {
+        try {
+            await runAppleScript(`
+            set the clipboard to "${value.replace(/"/g, '\\"')}"
+            `);
+        } catch (error) {
+            throw new Error(`Could not set clipboard: ${error}`);
+        }
+    }
+
     async enableAccessibility(): Promise<void> {
         try {
             await this.set(`value of attribute "AXManualAccessibility"`, "true");
-        } catch (error) {
-            throw new Error(`Could not enable accessibility: ${error}`);
-        }
+        } catch (error) {}
     }
 }
