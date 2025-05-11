@@ -4,7 +4,7 @@ import {
     getResponse as getResponseAS,
     enableWebSearch,
     launch,
-} from "./applescript";
+} from "./applescript/index";
 import { cancellableDelay } from "../common/utils";
 
 const DELAY = 500;
