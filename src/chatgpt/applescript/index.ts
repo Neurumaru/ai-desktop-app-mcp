@@ -60,10 +60,17 @@ export async function getStatus(): Promise<Status> {
  * Sends a prompt to ChatGPT.
  */
 export async function send(prompt: string): Promise<void> {
-    await script.enableAccessibility();
-    // Set the input prompt
-    await script.set(ui.prompt(), `"${prompt.replace(/"/g, '\\"')}"`);
-    // Find the send button index by help text
+    // Launch (activate ChatGPT & enable accessibility)
+    await launch();
+    // Backup current clipboard
+    const originalClipboard = await script.getClipboard();
+    // Set clipboard to the prompt text
+    await script.setClipboard(prompt);
+    // 붙여넣기 메뉴 항목 클릭
+    await script.click(ui.pasteMenu());
+    // Restore original clipboard
+    await script.setClipboard(originalClipboard);
+    // Click original send button in UI
     const helps = await script.queryAll(
         "help of current",
         ui.buttons(),
@@ -73,7 +80,6 @@ export async function send(prompt: string): Promise<void> {
     if (idx < 0) {
         throw new Error("Send button not found");
     }
-    // Click the send button
     const element = `item ${idx + 1} of ${ui.buttons()}`;
     await script.click(element);
 }
