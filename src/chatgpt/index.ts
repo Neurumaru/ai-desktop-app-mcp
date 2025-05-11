@@ -57,7 +57,7 @@ export async function handleTool(name: string, args: any) {
             content: [
                 {
                     type: "text",
-                    text: `Error during ${name}: ${error.message}`,
+                    text: `Error during ${name}: ${error instanceof Error ? error.message : String(error)}`,
                 },
             ],
             isError: true,
