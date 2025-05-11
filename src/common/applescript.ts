@@ -13,7 +13,7 @@ export class AppleScript {
             tell application "${this.process}" to activate
             `);
         } catch (error) {
-            throw new Error("Could not launch application");
+            throw new Error(`Could not launch application: ${error}`);
         }
     }
 
@@ -27,7 +27,7 @@ export class AppleScript {
             end tell
             `);
         } catch (error) {
-            throw new Error("Could not click element");
+            throw new Error(`Could not click element: ${error}`);
         }
     }
 
@@ -48,7 +48,7 @@ export class AppleScript {
             `);
             return result;
         } catch (error) {
-            throw new Error("Could not query element");
+            throw new Error(`Could not query element: ${error}`);
         }
     }
 
@@ -71,7 +71,7 @@ export class AppleScript {
             `);
             return result.split("\n");
         } catch (error) {
-            throw new Error("Could not query element");
+            throw new Error(`Could not query element: ${error}`);
         }
     }
 
@@ -86,7 +86,7 @@ export class AppleScript {
             `, {humanReadableOutput: false});
             return result.split(`of application process "${this.process}" of application "System Events", `);
         } catch (error) {
-            throw new Error("Could not list element");
+            throw new Error(`Could not list element: ${error}`);
         }
     }
 
@@ -101,7 +101,7 @@ export class AppleScript {
             `);
             return result;
         } catch (error) {
-            throw new Error("Could not fetch element");
+            throw new Error(`Could not fetch element: ${error}`);
         }
     }
 
@@ -120,7 +120,7 @@ export class AppleScript {
             `);
             return result == "true";
         } catch (error) {
-            throw new Error("Could not check if element exists");
+            throw new Error(`Could not check if element exists: ${error}`);
         }
     }
 
@@ -134,7 +134,7 @@ export class AppleScript {
             end tell
             `);
         } catch (error) {
-            throw new Error("Could not set element");
+            throw new Error(`Could not set element: ${error}`);
         }
     }
 
@@ -142,7 +142,7 @@ export class AppleScript {
         try {
             await this.set(`value of attribute "AXManualAccessibility"`, "true");
         } catch (error) {
-            throw new Error("Could not enable accessibility");
+            throw new Error(`Could not enable accessibility: ${error}`);
         }
     }
 }
