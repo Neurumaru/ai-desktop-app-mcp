@@ -1,10 +1,10 @@
 export const PAGE_PATH = `splitter group 1 of group 1 of window "ChatGPT"`;
 
-// Subpath constants following Claude's pattern
 const PROMPT_SUBPATH = `value of text area 1 of scroll area 3 of group 2`;
 const BUTTON_GROUP_SUBPATH = `group 2`;
 const BUTTONS_SUBPATH = `buttons`;
 const ALL_ELEMENTS_SUBPATH = `entire contents`;
+const PASTE_MENU_PATH = `menu item 6 of menu 1 of menu bar item 4 of menu bar 1`;
 
 export const EXPECTED_VOICE_START_BUTTON = "음성 대화 시작";
 export const EXPECTED_VOICE_READ_BUTTON = "음성 받아쓰기";
@@ -37,5 +37,9 @@ export class ChatGptUIPath {
 
     allElements(): string {
         return `${ALL_ELEMENTS_SUBPATH} of ${this.page}`;
+    }
+
+    pasteMenu(): string {
+        return PASTE_MENU_PATH;
     }
 }
