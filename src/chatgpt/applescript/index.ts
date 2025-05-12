@@ -3,7 +3,6 @@ import { AppleScript } from "../../common/applescript";
 import {
     ChatGptUIPath,
     EXPECTED_VOICE_START_BUTTON,
-    EXPECTED_VOICE_READ_BUTTON,
     EXPECTED_WEB_SEARCH_BUTTON,
     EXPECTED_SEND_BUTTON,
     EXPECTED_MESSAGES_ROLE,
@@ -45,9 +44,10 @@ export async function getStatus(): Promise<Status> {
         const readyButtons = await script.queryAll(
             "help of current",
             ui.buttons(),
-            `help of current is "${EXPECTED_VOICE_START_BUTTON}" or help of current is "${EXPECTED_VOICE_READ_BUTTON}"`
+            `help of current is "${EXPECTED_VOICE_START_BUTTON}" or help of current is "${EXPECTED_SEND_BUTTON}"`
         );
-        if (readyButtons.length > 0) {
+        if (readyButtons.includes(EXPECTED_VOICE_START_BUTTON)
+                || readyButtons.includes(EXPECTED_SEND_BUTTON)) {
             return "ready";
         }
     } catch {
@@ -89,16 +89,12 @@ export async function send(prompt: string): Promise<void> {
  */
 export async function getResponse(): Promise<string> {
     await script.enableAccessibility();
-    const lines = await script.list(ui.allElements());
-    const staticLines = lines.filter((line) =>
-        line.trim().startsWith(`static text`)
+    // Retrieve all static text elements and extract their values
+    const values = await script.queryAll(
+        "description of current",
+        ui.allElements(),
+        `role of current is "${EXPECTED_MESSAGES_ROLE}"`
     );
-    const values = staticLines
-        .map((line) => {
-            const m = line.trim().match(/^static text "(.+?)" of/);
-            return m ? m[1] : "";
-        })
-        .filter((v) => v !== "");
     return values.join("\n");
 }
 
